@@ -2,6 +2,7 @@ const chalk = require('chalk')
 const fs = require('fs')
 const npm = require('npm')
 const Package = require('./package')
+const semver = require('semver')
 
 const die = (message) => console.error(chalk.bold.red(message))
 const warn = (message) => console.warn(chalk.yellow(message))
@@ -29,9 +30,18 @@ fs.readFile('package.json', 'utf-8', function(error, contents) {
     })
 
     let peerInstallOptions=packageContents.peerInstallOptions
+    peerInstallOptions['save'] = false
 
-    peerInstallOptions['save'] = false;
-    npm.load(peerInstallOptions, function() {
-        npm.commands.install(packages)
-    })
+    if (semver.major(npm.version) < 7) {
+        npm.load(peerInstallOptions, function () {
+            npm.commands.install(packages)
+        })
+    }
+    else {
+        npm.load(function () {
+            // for (const option in peerInstallOptions)
+            //     npm.config.set(option, peerInstallOptions[option])
+            npm.commands.install(packages)
+        })
+    }
 })
